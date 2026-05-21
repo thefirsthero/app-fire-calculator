@@ -64,6 +64,18 @@ npm run dev
 npm run build
 ```
 
+### Run with Docker
+
+```bash
+# Build the image
+docker build -t fire-calculator .
+
+# Run it on port 3000
+docker run --rm -p 3000:3000 fire-calculator
+```
+
+Then open http://localhost:3000.
+
 ## 🛠️ Tech Stack
 
 - **React 19** - UI framework
