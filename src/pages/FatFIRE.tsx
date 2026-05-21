@@ -7,11 +7,13 @@ import { Card, CardHeader, CardContent, ResultCard, UrlActions, ProgressToFIRE, 
 import { ProjectionChart } from '../components/charts'
 import SEO from '../components/SEO'
 import { calculatorSEO } from '../config/seo'
+import { convertCurrencyAmount } from '../utils/currency'
 
-const FAT_THRESHOLD = 100000
+const FAT_THRESHOLD_USD = 100000
 
 export default function FatFIRE() {
   const { params, setParam, resetParams, copyUrl, hasCustomParams } = useCalculatorParams()
+  const fatThreshold = convertCurrencyAmount(FAT_THRESHOLD_USD, 'USD', params.currency)
 
   const results = useMemo(() => {
     return calculateFatFIRE({
@@ -27,7 +29,7 @@ export default function FatFIRE() {
     })
   }, [params])
 
-  const isFat = params.annualExpenses >= FAT_THRESHOLD
+  const isFat = params.annualExpenses >= fatThreshold
 
   const handleExport = () => {
     const { values: inputValues, formats: inputFormats } = prepareInputsForExport({
@@ -100,7 +102,7 @@ export default function FatFIRE() {
             <h3 className="font-semibold text-purple-900 dark:text-purple-100">What is Fat FIRE?</h3>
             <p className="text-sm text-purple-700 dark:text-purple-300 mt-1">
               Fat FIRE means achieving financial independence while maintaining a luxurious or upper-middle-class 
-              lifestyle (typically $100,000+/year in expenses). It requires a larger nest egg but allows you to 
+              lifestyle (typically {formatCurrency(fatThreshold)}+/year in expenses). It requires a larger nest egg but allows you to 
               retire without sacrifice.
             </p>
           </div>
@@ -139,19 +141,19 @@ export default function FatFIRE() {
                 label="Annual Expenses (Fat)"
                 value={params.annualExpenses}
                 onChange={(v) => setParam('annualExpenses', v)}
-                tooltip="For Fat FIRE, typically $100,000+ per year"
+                tooltip={`For Fat FIRE, typically ${formatCurrency(fatThreshold)}+ per year`}
               />
               <div className="mt-2">
                 <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
                   <span>Fat threshold</span>
-                  <span>{formatCurrency(FAT_THRESHOLD)}</span>
+                  <span>{formatCurrency(fatThreshold)}</span>
                 </div>
                 <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div 
                     className={`h-full transition-all ${
                       isFat ? 'bg-purple-500' : 'bg-gray-400'
                     }`}
-                    style={{ width: `${Math.min(100, (params.annualExpenses / FAT_THRESHOLD) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (params.annualExpenses / fatThreshold) * 100)}%` }}
                   />
                 </div>
                 {isFat && (

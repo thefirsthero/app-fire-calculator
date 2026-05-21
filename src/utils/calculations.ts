@@ -2,6 +2,13 @@
 // FIRE Calculator - Core Calculation Functions
 // ============================================
 
+import {
+  convertCurrencyAmount,
+  formatCurrencyAmount,
+  getCurrentCurrencyCode,
+  type CurrencyCode,
+} from './currency'
+
 export interface FIREInputs {
   currentAge: number
   retirementAge: number
@@ -187,12 +194,12 @@ export function generateProjections(
  * Format currency for display
  */
 export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
+  return formatCurrencyWithCode(value)
+}
+
+export function formatCurrencyWithCode(value: number, currencyCode?: CurrencyCode): string {
+  const activeCurrency = currencyCode ?? getCurrentCurrencyCode()
+  return formatCurrencyAmount(value, activeCurrency, 0)
 }
 
 /**
@@ -320,7 +327,7 @@ export function calculateStandardFIRE(inputs: FIREInputs): StandardFIREResult {
  * 
  * @example
  * calculateCoastFIRE(30, 55, 100000, 24000, 0.07, 0.03, 0.04, 48000)
- * // If you have $100k at 30, you need ~$466k to "coast" to $1.2M by 55
+ * // If you have 100k at 30, you need about 466k to "coast" to 1.2M by 55
  */
 export function calculateCoastFIRE(
   currentAge: number,
@@ -384,15 +391,17 @@ export function calculateCoastFIRE(
 // Lean FIRE Calculator
 // ============================================
 
-const LEAN_FIRE_THRESHOLD = 40000 // $40k/year max for lean FIRE
+const LEAN_FIRE_THRESHOLD_USD = 40000
 
 export function calculateLeanFIRE(inputs: FIREInputs): LeanFIREResult {
   const standardResult = calculateStandardFIRE(inputs)
+  const currency = getCurrentCurrencyCode()
+  const leanThreshold = convertCurrencyAmount(LEAN_FIRE_THRESHOLD_USD, 'USD', currency)
   
   return {
     ...standardResult,
-    isLean: inputs.annualExpenses <= LEAN_FIRE_THRESHOLD,
-    leanThreshold: LEAN_FIRE_THRESHOLD,
+    isLean: inputs.annualExpenses <= leanThreshold,
+    leanThreshold,
   }
 }
 
@@ -400,15 +409,17 @@ export function calculateLeanFIRE(inputs: FIREInputs): LeanFIREResult {
 // Fat FIRE Calculator
 // ============================================
 
-const FAT_FIRE_THRESHOLD = 100000 // $100k/year min for fat FIRE
+const FAT_FIRE_THRESHOLD_USD = 100000
 
 export function calculateFatFIRE(inputs: FIREInputs): FatFIREResult {
   const standardResult = calculateStandardFIRE(inputs)
+  const currency = getCurrentCurrencyCode()
+  const fatThreshold = convertCurrencyAmount(FAT_FIRE_THRESHOLD_USD, 'USD', currency)
   
   return {
     ...standardResult,
-    isFat: inputs.annualExpenses >= FAT_FIRE_THRESHOLD,
-    fatThreshold: FAT_FIRE_THRESHOLD,
+    isFat: inputs.annualExpenses >= fatThreshold,
+    fatThreshold,
   }
 }
 
@@ -501,7 +512,7 @@ export function calculateBaristaFIRE(
  * 
  * @example
  * calculateWithdrawal(1000000, 0.04, 0.07, 0.03, 30)
- * // Tests if $1M portfolio with 4% withdrawal lasts 30 years at 7% return
+ * // Tests if a 1M portfolio with 4% withdrawal lasts 30 years at 7% return
  */
 export function calculateWithdrawal(
   portfolioValue: number,

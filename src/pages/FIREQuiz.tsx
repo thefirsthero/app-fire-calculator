@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardContent } from '../components/ui'
 import SEO from '../components/SEO'
 import { calculatorSEO } from '../config/seo'
+import { formatCurrency } from '../utils/calculations'
+import { getCurrencySymbol, getCurrentCurrencyCode } from '../utils/currency'
 
 interface QuizAnswers {
   currentAge?: number
@@ -30,6 +32,7 @@ export default function FIREQuiz() {
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState<QuizAnswers>({})
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null)
+  const currencySymbol = getCurrencySymbol(getCurrentCurrencyCode())
 
   const seoComponent = <SEO {...calculatorSEO.quiz} />
 
@@ -79,10 +82,10 @@ export default function FIREQuiz() {
       subtitle: 'This impacts your target savings amount',
       type: 'choice',
       choices: [
-        { value: 'minimal', label: 'Minimal/Frugal', desc: 'Living simply, $30K-$40K/year' },
-        { value: 'moderate', label: 'Moderate', desc: 'Comfortable basics, $40K-$70K/year' },
-        { value: 'comfortable', label: 'Comfortable', desc: 'No major sacrifices, $70K-$100K/year' },
-        { value: 'luxury', label: 'Luxury/Fat', desc: 'High-end lifestyle, $100K+/year' },
+        { value: 'minimal', label: 'Minimal/Frugal', desc: `Living simply, ${formatCurrency(30000)}-${formatCurrency(40000)}/year` },
+        { value: 'moderate', label: 'Moderate', desc: `Comfortable basics, ${formatCurrency(40000)}-${formatCurrency(70000)}/year` },
+        { value: 'comfortable', label: 'Comfortable', desc: `No major sacrifices, ${formatCurrency(70000)}-${formatCurrency(100000)}/year` },
+        { value: 'luxury', label: 'Luxury/Fat', desc: `High-end lifestyle, ${formatCurrency(100000)}+/year` },
       ],
     },
     {
@@ -433,7 +436,7 @@ export default function FIREQuiz() {
           {currentQuestion.type === 'currency' && (
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-lg">
-                $
+                {currencySymbol}
               </span>
               <input
                 type="number"

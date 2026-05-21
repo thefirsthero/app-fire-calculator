@@ -25,13 +25,13 @@ export const calculatorSEO: Record<string, PageSEO> = {
   },
   lean: {
     title: 'Lean FIRE Calculator - Minimalist Early Retirement Planning',
-    description: 'Free Lean FIRE calculator for minimalist lifestyle planning. Calculate your FIRE number with lower expenses ($40k or less annually) and retire earlier with a frugal approach.',
+    description: 'Free Lean FIRE calculator for minimalist lifestyle planning. Calculate your FIRE number with lower annual expenses and retire earlier with a frugal approach.',
     keywords: 'lean FIRE calculator, frugal retirement, minimalist FIRE, low cost retirement, early retirement on a budget',
     canonicalPath: '/lean',
   },
   fat: {
     title: 'Fat FIRE Calculator - Luxury Early Retirement Planning',
-    description: 'Free Fat FIRE calculator for planning a luxurious early retirement. Calculate your FIRE number for a comfortable lifestyle ($100k+ annually) without financial compromises.',
+    description: 'Free Fat FIRE calculator for planning a luxurious early retirement. Calculate your FIRE number for a comfortable lifestyle with higher annual expenses and no major compromises.',
     keywords: 'fat FIRE calculator, luxury retirement, high income FIRE, comfortable retirement, affluent early retirement',
     canonicalPath: '/fat',
   },

@@ -148,7 +148,7 @@ export default function BaristaFIRE() {
                 tooltip="Expected yearly income from part-time work"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Tip: $15-25/hr × 20 hrs/week = $15,600-26,000/year
+                Tip: {formatCurrency(15)}-{formatCurrency(25)}/hr x 20 hrs/week = {formatCurrency(15600)}-{formatCurrency(26000)}/year
               </p>
             </div>
 

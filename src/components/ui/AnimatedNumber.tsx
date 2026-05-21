@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
+import { formatCurrencyAmount, getCurrentCurrencyCode } from '../../utils/currency'
 
 interface AnimatedNumberProps {
   value: number
@@ -51,12 +52,7 @@ export default function AnimatedNumber({
   const formatValue = () => {
     switch (format) {
       case 'currency':
-        return new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: 'USD',
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        }).format(displayValue)
+        return formatCurrencyAmount(displayValue, getCurrentCurrencyCode(), 0)
       case 'percent':
         return `${(displayValue * 100).toFixed(1)}%`
       case 'years':

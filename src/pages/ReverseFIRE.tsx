@@ -312,7 +312,7 @@ export default function ReverseFIRE() {
                           <td className="py-2 px-3 text-gray-600 dark:text-gray-400">{targetAge - params.currentAge} years</td>
                           <td className="py-2 px-3 text-gray-900 dark:text-gray-100 font-medium">
                             {calc.alreadyAchievable ? (
-                              <span className="text-green-600 dark:text-green-400">$0 (on track!)</span>
+                              <span className="text-green-600 dark:text-green-400">{formatCurrency(0)} (on track!)</span>
                             ) : (
                               formatCurrency(calc.requiredMonthlySavings)
                             )}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import { useCalculatorParams } from '../hooks/useCalculatorParams'
 import { formatCurrency } from '../utils/calculations'
 import { exportToExcel, prepareInputsForExport, prepareResultsForExport } from '../utils/excelExport'
@@ -6,6 +6,7 @@ import { AgeInput, CurrencyInput } from '../components/inputs'
 import { Card, CardHeader, CardContent, ResultCard, UrlActions, Disclaimer, ExportButton } from '../components/ui'
 import SEO from '../components/SEO'
 import { calculatorSEO } from '../config/seo'
+import { convertCurrencyAmount } from '../utils/currency'
 
 // Healthcare cost estimates by age (annual, US average) - for future use
 // const HEALTHCARE_COSTS = {
@@ -78,6 +79,19 @@ export default function HealthcareGap() {
   const [annualDeductible, setAnnualDeductible] = useState(2500)
   const [annualOutOfPocket, setAnnualOutOfPocket] = useState(2000)
   const medicareAge = 65
+  const prevCurrencyRef = useRef(params.currency)
+
+  useEffect(() => {
+    const previousCurrency = prevCurrencyRef.current
+    const nextCurrency = params.currency
+
+    if (previousCurrency === nextCurrency) return
+
+    setMonthlyPremium((prev) => convertCurrencyAmount(prev, previousCurrency, nextCurrency))
+    setAnnualDeductible((prev) => convertCurrencyAmount(prev, previousCurrency, nextCurrency))
+    setAnnualOutOfPocket((prev) => convertCurrencyAmount(prev, previousCurrency, nextCurrency))
+    prevCurrencyRef.current = nextCurrency
+  }, [params.currency])
 
   const results = useMemo(() => {
     return calculateHealthcareGap(
@@ -271,21 +285,21 @@ export default function HealthcareGap() {
             <CardContent>
               <div className="grid sm:grid-cols-3 gap-4">
                 <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <p className="text-sm text-green-700 dark:text-green-300">$30k Income</p>
+                  <p className="text-sm text-green-700 dark:text-green-300">{formatCurrency(30000)} Income</p>
                   <p className="text-xl font-bold text-green-800 dark:text-green-200">
                     ~{formatCurrency(results.estimatedSubsidy30k)}
                   </p>
                   <p className="text-xs text-green-600 dark:text-green-400">Annual subsidy</p>
                 </div>
                 <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                  <p className="text-sm text-amber-700 dark:text-amber-300">$50k Income</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-300">{formatCurrency(50000)} Income</p>
                   <p className="text-xl font-bold text-amber-800 dark:text-amber-200">
                     ~{formatCurrency(results.estimatedSubsidy50k)}
                   </p>
                   <p className="text-xs text-amber-600 dark:text-amber-400">Annual subsidy</p>
                 </div>
                 <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">$75k+ Income</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{formatCurrency(75000)}+ Income</p>
                   <p className="text-xl font-bold text-gray-800 dark:text-gray-200">
                     ~{formatCurrency(results.estimatedSubsidy75k)}
                   </p>

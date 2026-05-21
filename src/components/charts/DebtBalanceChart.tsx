@@ -11,6 +11,7 @@ import {
 import { formatCurrency } from '../../utils/calculations'
 import { useTheme } from '../../context/ThemeContext'
 import type { DebtPayoffMonth } from '../../utils/calculations'
+import { formatCompactCurrencyAmount, getCurrentCurrencyCode } from '../../utils/currency'
 
 interface DebtBalanceChartProps {
   data: DebtPayoffMonth[]
@@ -27,15 +28,10 @@ export default function DebtBalanceChart({
 }: DebtBalanceChartProps) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
+  const activeCurrency = getCurrentCurrencyCode()
 
   const formatYAxis = (value: number) => {
-    if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`
-    }
-    if (value >= 1000) {
-      return `$${(value / 1000).toFixed(0)}K`
-    }
-    return `$${value}`
+    return formatCompactCurrencyAmount(value, activeCurrency)
   }
 
   // Combine data for comparison

@@ -1,5 +1,10 @@
 import { useId, useState } from 'react'
 import Tooltip from '../ui/Tooltip'
+import {
+  getCurrencyOption,
+  getCurrencySymbol,
+  getCurrentCurrencyCode,
+} from '../../utils/currency'
 
 interface CurrencyInputProps {
   label: string
@@ -26,6 +31,9 @@ export default function CurrencyInput({
 }: CurrencyInputProps) {
   const id = useId()
   const [isMonthly, setIsMonthly] = useState(false)
+  const currency = getCurrentCurrencyCode()
+  const currencySymbol = getCurrencySymbol(currency)
+  const currencyLocale = getCurrencyOption(currency).locale
 
   // When in monthly mode, display and edit monthly values, but store annual
   const displayValue = isMonthly ? value / 12 : value
@@ -80,7 +88,7 @@ export default function CurrencyInput({
     }
   }
 
-  const formattedValue = new Intl.NumberFormat('en-US').format(Math.round(displayValue))
+  const formattedValue = new Intl.NumberFormat(currencyLocale).format(Math.round(displayValue))
 
   return (
     <div className={className}>
@@ -106,7 +114,7 @@ export default function CurrencyInput({
       </div>
       <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none font-medium">
-          $
+          {currencySymbol}
         </span>
         <input
           id={id}

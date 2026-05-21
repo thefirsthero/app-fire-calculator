@@ -7,14 +7,16 @@ import { Card, CardHeader, CardContent, ResultCard, UrlActions, ProgressToFIRE, 
 import { ProjectionChart } from '../components/charts'
 import SEO from '../components/SEO'
 import { calculatorSEO } from '../config/seo'
+import { convertCurrencyAmount } from '../utils/currency'
 
-const LEAN_THRESHOLD = 40000
+const LEAN_THRESHOLD_USD = 40000
 
 export default function LeanFIRE() {
   const { params, setParam, resetParams, copyUrl, hasCustomParams } = useCalculatorParams()
+  const leanThreshold = convertCurrencyAmount(LEAN_THRESHOLD_USD, 'USD', params.currency)
 
   // Use lean-appropriate defaults
-  const leanExpenses = Math.min(params.annualExpenses, LEAN_THRESHOLD)
+  const leanExpenses = Math.min(params.annualExpenses, leanThreshold)
 
   const results = useMemo(() => {
     return calculateLeanFIRE({
@@ -30,7 +32,7 @@ export default function LeanFIRE() {
     })
   }, [params, leanExpenses])
 
-  const isLean = params.annualExpenses <= LEAN_THRESHOLD
+  const isLean = params.annualExpenses <= leanThreshold
 
   const handleExport = () => {
     const { values: inputValues, formats: inputFormats } = prepareInputsForExport({
@@ -102,7 +104,7 @@ export default function LeanFIRE() {
           <div>
             <h3 className="font-semibold text-green-900 dark:text-green-100">What is Lean FIRE?</h3>
             <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-              Lean FIRE means achieving financial independence with minimal expenses (typically ≤$40,000/year 
+              Lean FIRE means achieving financial independence with minimal expenses (typically up to {formatCurrency(leanThreshold)}/year 
               for a household). It requires living frugally but allows you to retire much earlier than 
               traditional or Fat FIRE approaches.
             </p>
@@ -119,7 +121,7 @@ export default function LeanFIRE() {
               <h3 className="font-semibold text-amber-900 dark:text-amber-100">Expenses Above Lean Threshold</h3>
               <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
                 Your expenses ({formatCurrency(params.annualExpenses)}) exceed the typical Lean FIRE threshold 
-                of {formatCurrency(LEAN_THRESHOLD)}. Consider the <strong>Standard FIRE</strong> or{' '}
+                of {formatCurrency(leanThreshold)}. Consider the <strong>Standard FIRE</strong> or{' '}
                 <strong>Fat FIRE</strong> calculators, or reduce your expected expenses.
               </p>
             </div>
@@ -159,20 +161,20 @@ export default function LeanFIRE() {
                 label="Annual Expenses (Lean)"
                 value={params.annualExpenses}
                 onChange={(v) => setParam('annualExpenses', v)}
-                tooltip="For Lean FIRE, keep this ≤$40,000"
+                tooltip={`For Lean FIRE, keep this at or below ${formatCurrency(leanThreshold)}`}
                 max={100000}
               />
               <div className="mt-2">
                 <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
                   <span>Lean threshold</span>
-                  <span>{formatCurrency(LEAN_THRESHOLD)}</span>
+                  <span>{formatCurrency(leanThreshold)}</span>
                 </div>
                 <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div 
                     className={`h-full transition-all ${
                       isLean ? 'bg-green-500' : 'bg-amber-500'
                     }`}
-                    style={{ width: `${Math.min(100, (params.annualExpenses / LEAN_THRESHOLD) * 100)}%` }}
+                    style={{ width: `${Math.min(100, (params.annualExpenses / leanThreshold) * 100)}%` }}
                   />
                 </div>
               </div>

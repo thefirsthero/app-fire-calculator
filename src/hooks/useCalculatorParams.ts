@@ -2,10 +2,18 @@ import { useSearchParams } from 'react-router-dom'
 import { useCallback, useMemo, useRef } from 'react'
 
 import type { DebtItem } from '../utils/calculations'
+import {
+  CURRENCY_PARAM_KEY,
+  DEFAULT_CURRENCY,
+  convertCurrencyAmount,
+  isSupportedCurrency,
+  type CurrencyCode,
+} from '../utils/currency'
 
 const STORAGE_KEY = 'fire-calc-params'
 
 interface CalculatorParams {
+  currency: CurrencyCode
   currentAge: number
   retirementAge: number
   currentSavings: number
@@ -28,6 +36,7 @@ interface CalculatorParams {
 }
 
 const DEFAULTS: CalculatorParams = {
+  currency: DEFAULT_CURRENCY,
   currentAge: 30,
   retirementAge: 55,
   currentSavings: 100000,
@@ -49,6 +58,7 @@ const DEFAULTS: CalculatorParams = {
 }
 
 const PARAM_KEYS: Record<keyof CalculatorParams, string> = {
+  currency: CURRENCY_PARAM_KEY,
   currentAge: 'age',
   retirementAge: 'retire',
   currentSavings: 'savings',
@@ -67,6 +77,29 @@ const PARAM_KEYS: Record<keyof CalculatorParams, string> = {
   debtMonths: 'months',
   debtMode: 'mode',
   debtStrategy: 'strategy',
+}
+
+const CURRENCY_FIELDS: Array<keyof CalculatorParams> = [
+  'currentSavings',
+  'annualContribution',
+  'annualIncome',
+  'annualExpenses',
+  'partTimeIncome',
+  'portfolioValue',
+  'debtBudget',
+  'debtExtra',
+]
+
+function convertDebtCurrency(
+  debts: DebtItem[],
+  fromCurrency: CurrencyCode,
+  toCurrency: CurrencyCode
+): DebtItem[] {
+  return debts.map((debt) => ({
+    ...debt,
+    balance: convertCurrencyAmount(debt.balance, fromCurrency, toCurrency),
+    minPayment: convertCurrencyAmount(debt.minPayment, fromCurrency, toCurrency),
+  }))
 }
 
 // localStorage utilities
@@ -122,6 +155,9 @@ export function useCalculatorParams() {
             return DEFAULTS[key]
           }
         }
+        if (key === 'currency') {
+          return isSupportedCurrency(urlValue) ? urlValue : DEFAULTS.currency
+        }
         if (key === 'debtMode') {
           return urlValue === 'fixed' || urlValue === 'target' ? urlValue : DEFAULTS[key]
         }
@@ -147,6 +183,7 @@ export function useCalculatorParams() {
     }
 
     return {
+      currency: getParam('currency'),
       currentAge: getParam('currentAge'),
       retirementAge: getParam('retirementAge'),
       currentSavings: getParam('currentSavings'),
@@ -169,6 +206,61 @@ export function useCalculatorParams() {
   }, [searchParams])
 
   const setParam = useCallback((key: keyof CalculatorParams, value: any) => {
+    if (key === 'currency') {
+      if (!isSupportedCurrency(value)) return
+
+      const nextCurrency = value
+      const currentCurrency = params.currency
+
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev)
+        const updates: Partial<CalculatorParams> = {
+          currency: nextCurrency,
+          debts: convertDebtCurrency(params.debts, currentCurrency, nextCurrency),
+        }
+
+        CURRENCY_FIELDS.forEach((field) => {
+          const amount = params[field] as number
+          updates[field] = convertCurrencyAmount(amount, currentCurrency, nextCurrency) as any
+        })
+
+        Object.entries(updates).forEach(([entryKey, entryValue]) => {
+          const typedKey = entryKey as keyof CalculatorParams
+          const urlKey = PARAM_KEYS[typedKey]
+          const defaultValue = DEFAULTS[typedKey]
+
+          const isDefault = typedKey === 'debts'
+            ? JSON.stringify(entryValue) === JSON.stringify(defaultValue)
+            : entryValue === defaultValue
+
+          if (isDefault) {
+            newParams.delete(urlKey)
+          } else {
+            const stringValue = typedKey === 'debts'
+              ? encodeURIComponent(JSON.stringify(entryValue))
+              : entryValue!.toString()
+            newParams.set(urlKey, stringValue)
+          }
+        })
+
+        return newParams
+      }, { replace: true })
+
+      const currentStored = loadFromStorage() || {}
+      const updatesForStorage: Partial<CalculatorParams> = {
+        currency: nextCurrency,
+        debts: convertDebtCurrency(params.debts, currentCurrency, nextCurrency),
+      }
+      CURRENCY_FIELDS.forEach((field) => {
+        updatesForStorage[field] = convertCurrencyAmount(params[field] as number, currentCurrency, nextCurrency) as any
+      })
+
+      const updatedStored = { ...currentStored, ...updatesForStorage }
+      saveToStorage(updatedStored)
+      storedParamsRef.current = updatedStored
+      return
+    }
+
     const urlKey = PARAM_KEYS[key]
     setSearchParams(prev => {
       const newParams = new URLSearchParams(prev)
@@ -195,7 +287,7 @@ export function useCalculatorParams() {
     const updatedStored = { ...currentStored, [key]: value }
     saveToStorage(updatedStored)
     storedParamsRef.current = updatedStored
-  }, [setSearchParams])
+  }, [params, setSearchParams])
 
   // Debounced version of setParam for high-frequency updates (like slider inputs)
   const setParamDebounced = useCallback((key: keyof CalculatorParams, value: any, delay = 300) => {

@@ -10,6 +10,7 @@ import {
 } from 'recharts'
 import { formatCurrency } from '../../utils/calculations'
 import { useTheme } from '../../context/ThemeContext'
+import { formatCompactCurrencyAmount, getCurrentCurrencyCode } from '../../utils/currency'
 
 interface WithdrawalChartProps {
   data: { year: number; balance: number; withdrawal: number }[]
@@ -22,15 +23,10 @@ export default function WithdrawalChart({
 }: WithdrawalChartProps) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
+  const activeCurrency = getCurrentCurrencyCode()
 
   const formatYAxis = (value: number) => {
-    if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`
-    }
-    if (value >= 1000) {
-      return `$${(value / 1000).toFixed(0)}K`
-    }
-    return `$${value}`
+    return formatCompactCurrencyAmount(value, activeCurrency)
   }
 
   const CustomTooltip = ({ active, payload }: any) => {

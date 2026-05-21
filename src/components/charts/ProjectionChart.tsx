@@ -12,6 +12,7 @@ import {
 import type { ProjectionPoint } from '../../utils/calculations'
 import { formatCurrency } from '../../utils/calculations'
 import { useTheme } from '../../context/ThemeContext'
+import { formatCompactCurrencyAmount, getCurrentCurrencyCode } from '../../utils/currency'
 
 interface ProjectionChartProps {
   data: ProjectionPoint[]
@@ -66,6 +67,7 @@ export default function ProjectionChart({
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
   const colors = colorSchemes[colorScheme]
+  const activeCurrency = getCurrentCurrencyCode()
 
   // Calculate milestone values
   const milestones = fireNumber ? [
@@ -75,13 +77,7 @@ export default function ProjectionChart({
   ] : []
 
   const formatYAxis = (value: number) => {
-    if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`
-    }
-    if (value >= 1000) {
-      return `$${(value / 1000).toFixed(0)}K`
-    }
-    return `$${value}`
+    return formatCompactCurrencyAmount(value, activeCurrency)
   }
 
   // Calculate max portfolio value for Y-axis domain

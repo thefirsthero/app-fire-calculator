@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import { useCalculatorParams } from '../hooks/useCalculatorParams'
 import { formatCurrency } from '../utils/calculations'
 import { exportToExcel, prepareInputsForExport, prepareResultsForExport } from '../utils/excelExport'
@@ -7,6 +7,7 @@ import { Card, CardHeader, CardContent, ResultCard, UrlActions, Disclaimer, Expo
 import { ProjectionChart } from '../components/charts'
 import SEO from '../components/SEO'
 import { calculatorSEO } from '../config/seo'
+import { convertCurrencyAmount } from '../utils/currency'
 
 // Calculate investment growth and savings rate
 function calculateInvestmentGrowth(
@@ -115,6 +116,18 @@ export default function SavingsRate() {
   const [yearsInvesting, setYearsInvesting] = useState(30)
   const [contributionAmount, setContributionAmount] = useState(500)
   const [annualIncome, setAnnualIncome] = useState(75000)
+  const prevCurrencyRef = useRef(params.currency)
+
+  useEffect(() => {
+    const previousCurrency = prevCurrencyRef.current
+    const nextCurrency = params.currency
+
+    if (previousCurrency === nextCurrency) return
+
+    setContributionAmount((prev) => convertCurrencyAmount(prev, previousCurrency, nextCurrency))
+    setAnnualIncome((prev) => convertCurrencyAmount(prev, previousCurrency, nextCurrency))
+    prevCurrencyRef.current = nextCurrency
+  }, [params.currency])
 
   const results = useMemo(() => {
     return calculateInvestmentGrowth(

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Card, CardContent } from '../components/ui'
 import { calculators } from '../config/calculators'
 import SEO from '../components/SEO'
+import { formatCurrency } from '../utils/calculations'
 
 export default function Home() {
   return (
@@ -282,7 +283,7 @@ export default function Home() {
         <p className="text-gray-600 dark:text-gray-400">
           The most common FIRE calculation uses the <strong>4% rule</strong> (or 25x rule): if you can live on 4% of 
           your portfolio per year, you need to save 25 times your annual expenses. For example, if you 
-          spend $40,000 per year, you need $1,000,000 to be financially independent.
+          spend {formatCurrency(40000)} per year, you need {formatCurrency(1000000)} to be financially independent.
         </p>
       </div>
 

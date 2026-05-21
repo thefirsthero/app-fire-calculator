@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import { useCalculatorParams } from '../hooks/useCalculatorParams'
 import { 
   calculateSnowballPayoff, 
@@ -14,6 +14,7 @@ import DebtBalanceChart from '../components/charts/DebtBalanceChart'
 import DebtBreakdownChart from '../components/charts/DebtBreakdownChart'
 import SEO from '../components/SEO'
 import { calculatorSEO } from '../config/seo'
+import { convertCurrencyAmount, getCurrencySymbol } from '../utils/currency'
 
 export default function DebtPayoff() {
   const { params, resetParams, copyUrl, hasCustomParams } = useCalculatorParams()
@@ -25,6 +26,27 @@ export default function DebtPayoff() {
   const [monthlyBudget, setMonthlyBudget] = useState(params.debtBudget || 1000)
   const [targetMonths, setTargetMonths] = useState(params.debtMonths || 36)
   const [extraPayment, setExtraPayment] = useState(params.debtExtra || 0)
+  const prevCurrencyRef = useRef(params.currency)
+  const currencySymbol = getCurrencySymbol(params.currency)
+
+  useEffect(() => {
+    const previousCurrency = prevCurrencyRef.current
+    const nextCurrency = params.currency
+
+    if (previousCurrency === nextCurrency) return
+
+    setDebts((prevDebts) => prevDebts.map((debt) => ({
+      ...debt,
+      balance: convertCurrencyAmount(debt.balance, previousCurrency, nextCurrency),
+      minPayment: convertCurrencyAmount(debt.minPayment, previousCurrency, nextCurrency),
+    })))
+    setMonthlyBudget((prev) => convertCurrencyAmount(prev, previousCurrency, nextCurrency))
+    setExtraPayment((prev) => convertCurrencyAmount(prev, previousCurrency, nextCurrency))
+    prevCurrencyRef.current = nextCurrency
+  }, [params.currency])
+
+  const extraPaymentMax = convertCurrencyAmount(1000, 'USD', params.currency)
+  const extraPaymentStep = Math.max(1, Math.round(convertCurrencyAmount(25, 'USD', params.currency)))
 
   // Calculate results
   const results = useMemo(() => {
@@ -214,7 +236,7 @@ export default function DebtPayoff() {
                   />
                   {monthlyBudget < totalMinPayments && totalMinPayments > 0 && (
                     <p className="text-sm text-red-600 dark:text-red-400 mt-2">
-                      Budget must be at least ${totalMinPayments.toFixed(0)} (total minimum payments)
+                      Budget must be at least {formatCurrency(totalMinPayments)} (total minimum payments)
                     </p>
                   )}
                 </>
@@ -242,20 +264,20 @@ export default function DebtPayoff() {
 
               <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Extra Monthly Payment: ${extraPayment}
+                  Extra Monthly Payment: {formatCurrency(extraPayment)}
                 </label>
                 <input
                   type="range"
                   min={0}
-                  max={1000}
-                  step={25}
+                  max={extraPaymentMax}
+                  step={extraPaymentStep}
                   value={extraPayment}
                   onChange={(e) => setExtraPayment(Number(e.target.value))}
                   className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-fire-600"
                 />
                 <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  <span>$0</span>
-                  <span>$1,000</span>
+                  <span>{currencySymbol}0</span>
+                  <span>{formatCurrency(extraPaymentMax)}</span>
                 </div>
               </div>
             </div>
