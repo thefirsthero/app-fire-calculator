@@ -24,7 +24,8 @@ function calculateHealthcareGap(
   monthlyPremium: number,
   annualDeductible: number,
   annualOutOfPocket: number,
-  inflationRate: number
+  inflationRate: number,
+  currency: 'USD' | 'ZAR' | 'EUR' | 'GBP' | 'CAD' | 'AUD' | 'JPY'
 ) {
   const gapYears = Math.max(0, medicareAge - earlyRetirementAge)
   
@@ -50,12 +51,17 @@ function calculateHealthcareGap(
   }
   
   // ACA subsidy estimates (simplified)
+  const subsidy30kThreshold = convertCurrencyAmount(30000, 'USD', currency)
+  const subsidy50kThreshold = convertCurrencyAmount(50000, 'USD', currency)
+  const subsidy75kThreshold = convertCurrencyAmount(75000, 'USD', currency)
+  const subsidy100kThreshold = convertCurrencyAmount(100000, 'USD', currency)
+
   const calculateSubsidy = (income: number) => {
     // Very simplified - actual ACA subsidies are complex
-    if (income < 30000) return annualCost * 0.7 // ~70% subsidy
-    if (income < 50000) return annualCost * 0.5 // ~50% subsidy
-    if (income < 75000) return annualCost * 0.3 // ~30% subsidy
-    if (income < 100000) return annualCost * 0.15 // ~15% subsidy
+    if (income < subsidy30kThreshold) return annualCost * 0.7 // ~70% subsidy
+    if (income < subsidy50kThreshold) return annualCost * 0.5 // ~50% subsidy
+    if (income < subsidy75kThreshold) return annualCost * 0.3 // ~30% subsidy
+    if (income < subsidy100kThreshold) return annualCost * 0.15 // ~15% subsidy
     return 0
   }
   
@@ -65,14 +71,17 @@ function calculateHealthcareGap(
     totalCost: Math.round(totalCost),
     avgAnnualCost: gapYears > 0 ? Math.round(totalCost / gapYears) : 0,
     yearlyBreakdown,
-    estimatedSubsidy30k: Math.round(calculateSubsidy(30000)),
-    estimatedSubsidy50k: Math.round(calculateSubsidy(50000)),
-    estimatedSubsidy75k: Math.round(calculateSubsidy(75000)),
+    estimatedSubsidy30k: Math.round(calculateSubsidy(subsidy30kThreshold)),
+    estimatedSubsidy50k: Math.round(calculateSubsidy(subsidy50kThreshold)),
+    estimatedSubsidy75k: Math.round(calculateSubsidy(subsidy75kThreshold)),
   }
 }
 
 export default function HealthcareGap() {
   const { params, setParam, resetParams, copyUrl, hasCustomParams } = useCalculatorParams()
+  const subsidy30kThreshold = convertCurrencyAmount(30000, 'USD', params.currency)
+  const subsidy50kThreshold = convertCurrencyAmount(50000, 'USD', params.currency)
+  const subsidy75kThreshold = convertCurrencyAmount(75000, 'USD', params.currency)
   
   // Healthcare-specific params with configurable defaults
   const [monthlyPremium, setMonthlyPremium] = useState(600) // Default ACA silver plan
@@ -101,7 +110,8 @@ export default function HealthcareGap() {
       monthlyPremium,
       annualDeductible,
       annualOutOfPocket,
-      params.inflationRate
+      params.inflationRate,
+      params.currency
     )
   }, [params, monthlyPremium, annualDeductible, annualOutOfPocket])
 
@@ -285,21 +295,21 @@ export default function HealthcareGap() {
             <CardContent>
               <div className="grid sm:grid-cols-3 gap-4">
                 <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <p className="text-sm text-green-700 dark:text-green-300">{formatCurrency(30000)} Income</p>
+                  <p className="text-sm text-green-700 dark:text-green-300">{formatCurrency(subsidy30kThreshold)} Income</p>
                   <p className="text-xl font-bold text-green-800 dark:text-green-200">
                     ~{formatCurrency(results.estimatedSubsidy30k)}
                   </p>
                   <p className="text-xs text-green-600 dark:text-green-400">Annual subsidy</p>
                 </div>
                 <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
-                  <p className="text-sm text-amber-700 dark:text-amber-300">{formatCurrency(50000)} Income</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-300">{formatCurrency(subsidy50kThreshold)} Income</p>
                   <p className="text-xl font-bold text-amber-800 dark:text-amber-200">
                     ~{formatCurrency(results.estimatedSubsidy50k)}
                   </p>
                   <p className="text-xs text-amber-600 dark:text-amber-400">Annual subsidy</p>
                 </div>
                 <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{formatCurrency(75000)}+ Income</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{formatCurrency(subsidy75kThreshold)}+ Income</p>
                   <p className="text-xl font-bold text-gray-800 dark:text-gray-200">
                     ~{formatCurrency(results.estimatedSubsidy75k)}
                   </p>

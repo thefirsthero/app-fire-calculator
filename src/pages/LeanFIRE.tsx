@@ -162,7 +162,7 @@ export default function LeanFIRE() {
                 value={params.annualExpenses}
                 onChange={(v) => setParam('annualExpenses', v)}
                 tooltip={`For Lean FIRE, keep this at or below ${formatCurrency(leanThreshold)}`}
-                max={100000}
+                max={leanThreshold}
               />
               <div className="mt-2">
                 <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">

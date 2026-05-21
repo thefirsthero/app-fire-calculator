@@ -7,9 +7,14 @@ import { Card, CardHeader, CardContent, ResultCard, UrlActions, ProgressToFIRE, 
 import { ProjectionChart } from '../components/charts'
 import SEO from '../components/SEO'
 import { calculatorSEO } from '../config/seo'
+import { convertCurrencyAmount } from '../utils/currency'
 
 export default function BaristaFIRE() {
   const { params, setParam, resetParams, copyUrl, hasCustomParams } = useCalculatorParams()
+  const hourlyMin = convertCurrencyAmount(15, 'USD', params.currency)
+  const hourlyMax = convertCurrencyAmount(25, 'USD', params.currency)
+  const annualMin = convertCurrencyAmount(15600, 'USD', params.currency)
+  const annualMax = convertCurrencyAmount(26000, 'USD', params.currency)
 
   const results = useMemo(() => {
     return calculateBaristaFIRE(
@@ -148,7 +153,7 @@ export default function BaristaFIRE() {
                 tooltip="Expected yearly income from part-time work"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Tip: {formatCurrency(15)}-{formatCurrency(25)}/hr x 20 hrs/week = {formatCurrency(15600)}-{formatCurrency(26000)}/year
+                Tip: {formatCurrency(hourlyMin)}-{formatCurrency(hourlyMax)}/hr x 20 hrs/week = {formatCurrency(annualMin)}-{formatCurrency(annualMax)}/year
               </p>
             </div>
 

@@ -90,6 +90,23 @@ const CURRENCY_FIELDS: Array<keyof CalculatorParams> = [
   'debtExtra',
 ]
 
+function getCurrencyAwareDefaultValue(
+  key: keyof CalculatorParams,
+  currency: CurrencyCode
+): CalculatorParams[keyof CalculatorParams] {
+  const defaultValue = DEFAULTS[key]
+
+  if (key === 'debts') {
+    return defaultValue
+  }
+
+  if (CURRENCY_FIELDS.includes(key)) {
+    return convertCurrencyAmount(defaultValue as number, DEFAULT_CURRENCY, currency) as any
+  }
+
+  return defaultValue
+}
+
 function convertDebtCurrency(
   debts: DebtItem[],
   fromCurrency: CurrencyCode,
@@ -139,6 +156,13 @@ export function useCalculatorParams() {
   const storedParamsRef = useRef<Partial<CalculatorParams> | null>(loadFromStorage())
 
   const params = useMemo((): CalculatorParams => {
+    const urlCurrency = searchParams.get(PARAM_KEYS.currency)
+    const resolvedCurrency = urlCurrency && isSupportedCurrency(urlCurrency)
+      ? urlCurrency
+      : storedParamsRef.current?.currency && isSupportedCurrency(storedParamsRef.current.currency)
+        ? storedParamsRef.current.currency
+        : DEFAULTS.currency
+
     const getParam = (key: keyof CalculatorParams): any => {
       const urlKey = PARAM_KEYS[key]
       const urlValue = searchParams.get(urlKey)
@@ -179,7 +203,7 @@ export function useCalculatorParams() {
       }
       
       // Fall back to defaults
-      return DEFAULTS[key]
+      return getCurrencyAwareDefaultValue(key, resolvedCurrency)
     }
 
     return {
@@ -264,7 +288,7 @@ export function useCalculatorParams() {
     const urlKey = PARAM_KEYS[key]
     setSearchParams(prev => {
       const newParams = new URLSearchParams(prev)
-      const defaultValue = DEFAULTS[key]
+      const defaultValue = getCurrencyAwareDefaultValue(key, params.currency)
       
       // Compare with defaults
       const isDefault = key === 'debts'
@@ -308,7 +332,9 @@ export function useCalculatorParams() {
       Object.entries(updates).forEach(([key, value]) => {
         const typedKey = key as keyof CalculatorParams
         const urlKey = PARAM_KEYS[typedKey]
-        const defaultValue = DEFAULTS[typedKey]
+        const defaultValue = typedKey === 'currency'
+          ? DEFAULTS.currency
+          : getCurrencyAwareDefaultValue(typedKey, params.currency)
         
         const isDefault = key === 'debts'
           ? JSON.stringify(value) === JSON.stringify(defaultValue)
@@ -331,7 +357,7 @@ export function useCalculatorParams() {
     const updatedStored = { ...currentStored, ...updates }
     saveToStorage(updatedStored)
     storedParamsRef.current = updatedStored
-  }, [setSearchParams])
+  }, [params.currency, setSearchParams])
 
   const resetParams = useCallback(() => {
     setSearchParams(new URLSearchParams(), { replace: true })

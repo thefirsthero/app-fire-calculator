@@ -5,6 +5,7 @@ import SEO from '../components/SEO'
 import { calculatorSEO } from '../config/seo'
 import { formatCurrency } from '../utils/calculations'
 import { getCurrencySymbol, getCurrentCurrencyCode } from '../utils/currency'
+import { convertCurrencyAmount } from '../utils/currency'
 
 interface QuizAnswers {
   currentAge?: number
@@ -32,7 +33,13 @@ export default function FIREQuiz() {
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState<QuizAnswers>({})
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null)
-  const currencySymbol = getCurrencySymbol(getCurrentCurrencyCode())
+  const currency = getCurrentCurrencyCode()
+  const currencySymbol = getCurrencySymbol(currency)
+  const minimalMax = convertCurrencyAmount(40000, 'USD', currency)
+  const moderateMax = convertCurrencyAmount(70000, 'USD', currency)
+  const comfortableMax = convertCurrencyAmount(100000, 'USD', currency)
+  const luxuryMin = convertCurrencyAmount(100000, 'USD', currency)
+  const defaultExpenseLevel = convertCurrencyAmount(50000, 'USD', currency)
 
   const seoComponent = <SEO {...calculatorSEO.quiz} />
 
@@ -82,10 +89,10 @@ export default function FIREQuiz() {
       subtitle: 'This impacts your target savings amount',
       type: 'choice',
       choices: [
-        { value: 'minimal', label: 'Minimal/Frugal', desc: `Living simply, ${formatCurrency(30000)}-${formatCurrency(40000)}/year` },
-        { value: 'moderate', label: 'Moderate', desc: `Comfortable basics, ${formatCurrency(40000)}-${formatCurrency(70000)}/year` },
-        { value: 'comfortable', label: 'Comfortable', desc: `No major sacrifices, ${formatCurrency(70000)}-${formatCurrency(100000)}/year` },
-        { value: 'luxury', label: 'Luxury/Fat', desc: `High-end lifestyle, ${formatCurrency(100000)}+/year` },
+        { value: 'minimal', label: 'Minimal/Frugal', desc: `Living simply, ${formatCurrency(convertCurrencyAmount(30000, 'USD', currency))}-${formatCurrency(minimalMax)}/year` },
+        { value: 'moderate', label: 'Moderate', desc: `Comfortable basics, ${formatCurrency(minimalMax)}-${formatCurrency(moderateMax)}/year` },
+        { value: 'comfortable', label: 'Comfortable', desc: `No major sacrifices, ${formatCurrency(moderateMax)}-${formatCurrency(comfortableMax)}/year` },
+        { value: 'luxury', label: 'Luxury/Fat', desc: `High-end lifestyle, ${formatCurrency(luxuryMin)}+/year` },
       ],
     },
     {
@@ -121,10 +128,10 @@ export default function FIREQuiz() {
     const yearsToFIRE = (retirementAge || 65) - (currentAge || 30)
     
     // Determine expense level
-    const expenseLevel = annualExpenses || 50000
+    const expenseLevel = annualExpenses || defaultExpenseLevel
 
     // Lean FIRE logic
-    if (lifestyle === 'minimal' || (expenseLevel < 40000 && primaryGoal === 'retire-early')) {
+    if (lifestyle === 'minimal' || (expenseLevel < minimalMax && primaryGoal === 'retire-early')) {
       return {
         path: '/lean',
         title: 'Lean FIRE',
@@ -141,7 +148,7 @@ export default function FIREQuiz() {
     }
 
     // Fat FIRE logic
-    if (lifestyle === 'luxury' || (expenseLevel >= 100000 && primaryGoal === 'maintain-lifestyle')) {
+    if (lifestyle === 'luxury' || (expenseLevel >= luxuryMin && primaryGoal === 'maintain-lifestyle')) {
       return {
         path: '/fat',
         title: 'Fat FIRE',

@@ -1,0 +1,19 @@
+:3000 {
+	encode zstd gzip
+	root * /srv
+	try_files {path} /index.html
+
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	@immutable path *.js *.css *.png *.jpg *.jpeg *.svg *.ico *.woff2
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	@revalidate path /index.html /manifest.webmanifest /sw.js /workbox-*.js
+	header @revalidate Cache-Control "no-cache"
+
+	file_server
+}

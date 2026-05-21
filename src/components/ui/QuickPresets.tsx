@@ -1,3 +1,6 @@
+import { useMemo } from 'react'
+import { convertCurrencyAmount, getCurrentCurrencyCode } from '../../utils/currency'
+
 interface Preset {
   name: string
   icon: string
@@ -74,13 +77,38 @@ const defaultPresets: Preset[] = [
 ]
 
 export default function QuickPresets({ onApply, presets = defaultPresets }: QuickPresetsProps) {
+  const currency = getCurrentCurrencyCode()
+
+  const resolvedPresets = useMemo(() => {
+    if (presets !== defaultPresets) {
+      return presets
+    }
+
+    return defaultPresets.map((preset) => ({
+      ...preset,
+      values: Object.fromEntries(
+        Object.entries(preset.values).map(([key, value]) => {
+          if (
+            key === 'currentSavings' ||
+            key === 'annualContribution' ||
+            key === 'annualExpenses'
+          ) {
+            return [key, convertCurrencyAmount(value, 'USD', currency)]
+          }
+
+          return [key, value]
+        })
+      ),
+    }))
+  }, [currency, presets])
+
   return (
     <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
         ⚡ Quick Presets
       </h3>
       <div className="flex flex-wrap gap-2">
-        {presets.map((preset) => (
+        {resolvedPresets.map((preset) => (
           <button
             key={preset.name}
             onClick={() => onApply(preset.values)}
